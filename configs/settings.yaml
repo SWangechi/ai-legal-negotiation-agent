@@ -1,0 +1,17 @@
+adaptive_learning:
+  enabled: true
+  update_frequency_days: 7
+  min_feedback_count: 5
+  sentiment_weight:
+    positive: 1.2
+    neutral: 1.0
+    negative: 0.8
+  chroma_memory_path: "data/chroma_memory"
+  feedback_source_path: "data/user_feedback.jsonl"
+  llm_model: "gpt-4-vision-preview"
+  embedding_model: "text-embedding-3-small"
+  sentiment_model: "gpt-4-vision-preview"
+  batch_size: 10
+  log_level: "INFO"
+  debug_mode: false
+  
