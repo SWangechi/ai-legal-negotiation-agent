@@ -9,6 +9,11 @@ __pycache__/
 *.pkl
 
 # Notebooks & test outputs
-notebooks/
-*.ipynb_checkpoints/
 test_outputs/
+
+data/faiss_index/
+data/memory_store/
+data/memory_store_chroma/
+*.pkl
+*.bin
+*.sqlite3
