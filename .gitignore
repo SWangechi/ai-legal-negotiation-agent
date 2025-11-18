@@ -1,11 +1,19 @@
-venv/
+# Data and runtime artifacts
+data/
+database/
 __pycache__/
-.env
-.DS_Store
 *.sqlite3
-# Ignore all local datasets, embeddings, models, logs
-/data/
-/**/*.pdf
-/**/*.json
-/**/*.db
-data/negotiation_logs/
+*.db
+*.log
+*.env
+*.pkl
+
+# Notebooks & test outputs
+test_outputs/
+
+data/faiss_index/
+data/memory_store/
+data/memory_store_chroma/
+*.pkl
+*.bin
+*.sqlite3
