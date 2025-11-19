@@ -28,6 +28,6 @@ def store_in_chromadb(text: str, metadata: dict, embedding: list):
         metadatas=[metadata],
         ids=[f"feedback_{metadata['timestamp']}"]
     )
-print(f"✅ Stored feedback from {metadata['username']} in ChromaDB.")
+print(f"Stored feedback from {metadata['username']} in ChromaDB.")
     
     
