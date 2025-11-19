@@ -1,4 +1,3 @@
-# backend/server.py
 import os
 import sqlite3
 import uuid
