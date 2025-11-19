@@ -21,11 +21,11 @@ except Exception:
     REPORTLAB_AVAILABLE = False
 
 
-BACKEND_URL = "http://127.0.0.1:8000"  
-ANALYZE_ENDPOINT = f"{BACKEND_URL}/analyze"
-NEGOTIATE_ENDPOINT = f"{BACKEND_URL}/negotiate"
-MEDIATE_ENDPOINT = f"{BACKEND_URL}/mediate"
-FEEDBACK_ENDPOINT = f"{BACKEND_URL}/feedback"
+API_BASE = "https://YOUR_BACKEND_URL"   # No trailing slash
+NEGOTIATE_ENDPOINT = f"{API_BASE}/negotiate"
+MEDIATE_ENDPOINT    = f"{API_BASE}/mediate"
+ANALYZE_ENDPOINT    = f"{API_BASE}/analyze"
+FEEDBACK_ENDPOINT   = f"{API_BASE}/feedback"
 
 TIMEOUT_SECONDS = 60  
 
