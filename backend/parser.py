@@ -1,23 +1,19 @@
 import re
 
-def clean_text(text: str) -> str:
+def split_into_clauses(text):
     """
-    Cleans up PDF artifacts and formatting issues from extracted text.
+    Split contract into clauses using section headers, numbering, etc.
     """
-    text = re.sub(r'\s+', ' ', text)  
-    text = re.sub(r'-\s', '', text)
-    text = text.replace(" .", ".")
-    return text.strip()
 
+    patterns = [
+        r"\n\d+\.",        
+        r"\n\d+\)",        
+        r"\n[A-Z][a-zA-Z ]+:" 
+    ]
 
-def split_clauses(text: str):
-    """
-    Splits contract text into logical clauses for AI analysis.
-    """
-    cleaned = clean_text(text)
+    combined = "|".join(patterns)
 
-    
-    parts = re.split(r'(?=\b\d+\.\s|\b[a-zA-Z]\)\s|Article\s+\d+|Clause\s+\d+)', cleaned)
-    clauses = [p.strip() for p in parts if len(p.strip()) > 40]  
+    pieces = re.split(combined, text)
+    clauses = [c.strip() for c in pieces if len(c.strip()) > 30]
 
     return clauses
