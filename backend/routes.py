@@ -19,7 +19,6 @@ def clean_llm_json(text: str) -> str:
     if not isinstance(text, str):
         return str(text)
     t = text.strip()
-    # remove ```json ... ``` wrapper
     t = re.sub(r"^```json\s*", "", t, flags=re.IGNORECASE)
     t = t.replace("```", "")
     return t.strip()

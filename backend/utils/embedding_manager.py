@@ -1,7 +1,7 @@
 """
 embedding_manager.py
 ---------------------
-Handles embedding generation and ChromaDB storage for adaptive learning.
+Handles embedding generation, storage, and retrieval using ChromaDB.
 """
 
 import chromadb
@@ -11,7 +11,6 @@ from sentence_transformers import SentenceTransformer
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 client = chromadb.Client(Settings(persist_directory="data/chroma_memory"))
-
 collection = client.get_or_create_collection("feedback_memory")
 
 
@@ -28,6 +27,22 @@ def store_in_chromadb(text: str, metadata: dict, embedding: list):
         metadatas=[metadata],
         ids=[f"feedback_{metadata['timestamp']}"]
     )
-print(f"Stored feedback from {metadata['username']} in ChromaDB.")
-    
-    
+    print(f"Stored feedback from {metadata['username']} in ChromaDB.")
+
+
+def search_memory(query: str, k: int = 4):
+    """Retrieve top-k similar memory entries from ChromaDB."""
+    query_embedding = generate_embedding(query)
+
+    results = collection.query(
+        query_embeddings=[query_embedding],
+        n_results=k
+    )
+
+    docs = results.get("documents", [[]])[0]
+    metas = results.get("metadatas", [[]])[0]
+
+    return [
+        {"text": doc, "metadata": meta}
+        for doc, meta in zip(docs, metas)
+    ]

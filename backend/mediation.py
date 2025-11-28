@@ -1,36 +1,24 @@
+import os, json, re
 from openai import OpenAI
-import os
+from backend.prompts.mediation import build_mediation_messages
 from dotenv import load_dotenv
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def mediate(party_a: str, party_b: str):
-    prompt = f"""
-You are a professional Kenyan mediation AI assistant.
+    """
+    Generates a mediation decision using:
+    - System + Few-shot prompt builder
+    - Kenyan ADR principles
+    - Markdown output for the UI
+    """
 
-Your output MUST be clean markdown with headings:
-### Neutral Summary of the Dispute
-### Party A Interests
-### Party B Interests
-### Objective Evaluation
-### Fair Compromise
-### Legal Grounding (Kenyan ADR Law)
-
-DO NOT return JSON. 
-DO NOT wrap output in code blocks.
-DO NOT use quotes around sections.
-
-PARTY A:
-{party_a}
-
-PARTY B:
-{party_b}
-"""
+    messages = build_mediation_messages(party_a, party_b)
 
     res = client.chat.completions.create(
         model="gpt-4.1-mini",
-        messages=[{"role": "user", "content": prompt}],
+        messages=messages,
         temperature=0.3
     )
 

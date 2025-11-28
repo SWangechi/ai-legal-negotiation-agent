@@ -1,5 +1,8 @@
-import os, json, re
+import json
+import re
+import os
 from openai import OpenAI
+from backend.prompts.negotiation import build_negotiation_messages
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,16 +20,20 @@ STRICT_SCHEMA = {
 }
 
 def force_json_repair(bad_text: str):
-    """Second-pass attempt: Ask the LLM to fix bad JSON into correct JSON dict."""
+    """
+    Attempts to repair invalid JSON output from LLM.
+    """
+
     fix_prompt = f"""
-Convert the following into valid strict JSON with keys:
+Convert the following into STRICT JSON with these keys only:
 dialogue, mutually_beneficial_revision, tradeoffs, win_win_justification, legal_refs.
 
-Return ONLY JSON. No explanation.
+Return ONLY JSON. No explanations.
 
 Input:
 {bad_text}
 """
+
     try:
         res = client.chat.completions.create(
             model="gpt-4.1-mini",
@@ -38,46 +45,41 @@ Input:
     except:
         return None
 
-def negotiate(clause: str, position: str):
-    prompt = f"""
-You MUST output ONLY VALID JSON. NO markdown, NO code fences, NO prose.
 
-JSON structure:
-{json.dumps(STRICT_SCHEMA, indent=2)}
+def negotiate(clause: str, position: str, turns: int = 4):
+    """
+    Runs a contract negotiation simulation between Party A & Party B.
+    """
 
-Now generate negotiation JSON.
-
-CLAUSE:
-{clause}
-
-COUNTERPARTY POSITION:
-{position}
-"""
+    messages = build_negotiation_messages(clause, position, turns)
 
     try:
         res = client.chat.completions.create(
             model="gpt-4.1-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2
+            messages=messages,
+            temperature=0.25
         )
-        txt = res.choices[0].message.content.strip()
+        raw_text = res.choices[0].message.content.strip()
     except Exception as e:
-        return f"ERROR contacting LLM: {e}"
+        return {"error": f"LLM request failed: {e}"}
 
     try:
-        return json.loads(txt)
+        return json.loads(raw_text)
     except:
         pass
 
-    m = re.search(r"\{[\s\S]*\}", txt)
-    if m:
+    match = re.search(r"\{[\s\S]*\}", raw_text)
+    if match:
         try:
-            return json.loads(m.group(0))
+            return json.loads(match.group(0))
         except:
             pass
 
-    repaired = force_json_repair(txt)
+    repaired = force_json_repair(raw_text)
     if repaired:
         return repaired
 
-    return txt
+    return {
+        "error": "Unable to parse negotiation JSON.",
+        "raw_output": raw_text
+    }

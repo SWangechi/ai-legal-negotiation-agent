@@ -1,45 +1,57 @@
-# backend/reasoning.py
-import os
-import json
-from dotenv import load_dotenv
+import os, json, re
 from openai import OpenAI
-from backend.memory_manager import search_memory
+from backend.prompts.contract_analysis import build_contract_analysis_messages
+from backend.utils.embedding_manager import search_memory
+from dotenv import load_dotenv
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def reason_over_clause(clause: str):
+    """
+    Performs contract clause analysis using:
+    - Chroma memory retrieval
+    - New system + few-shot + CoT-suppressed prompts
+    - JSON output structure from prompt template
+    """
+
     retrieved = search_memory(clause, k=4)
     context = "\n\n---\n\n".join([r.get("text", "") for r in retrieved])
 
-    prompt = (
-        "You are an expert Kenyan contract lawyer AI.\n\n"
-        "Use the context below ONLY to support your reasoning.\n\n"
-        "CONTEXT:\n"
-        "{}\n\n"
-        "CLAUSE:\n"
-        "{}\n\n"
-        "TASK:\n"
-        "1) Identify the legal issue (short string)\n"
-        "2) Identify compliance risks under Kenyan Law (short string)\n"
-        "3) Propose a fair and balanced revision (string)\n"
-        "4) Explain rationale (string)\n"
-        "5) Cite Kenyan legal references (array of strings)\n\n"
-        "Return JSON ONLY in this exact structure:\n"
-        "{{\n"
-        "  \"issue\": \"...\",\n"
-        "  \"risk\": \"...\",\n"
-        "  \"revision\": \"...\",\n"
-        "  \"rationale\": \"...\",\n"
-        "  \"legal_refs\": [\"...\",\"...\"]\n"
-        "}}\n"
-    ).format(context, clause)
+    messages = build_contract_analysis_messages(clause)
 
-    res = client.responses.create(
+    if context.strip():
+        messages.append({
+            "role": "user",
+            "content": f"\nADDITIONAL CONTEXT FROM MEMORY:\n{context}"
+        })
+
+    response = client.chat.completions.create(
         model="gpt-4o-mini",
-        input=prompt,
-        max_output_tokens=1500
+        messages=messages,
+        temperature=0.2,
+        max_tokens=1500,
     )
 
-    text = res.output_text if hasattr(res, "output_text") else "".join([o.get("content","") for o in res.output or []])
-    return text, retrieved
+    result_text = response.choices[0].message.content
+    return result_text, retrieved
+
+def format_revision(revision_dict, style="legal"):
+    """Format suggested revisions in two possible styles: plain or legal."""
+
+    if style == "plain":
+        lines = []
+        for key, value in revision_dict.items():
+            title = key.replace("_", " ").title()
+            lines.append(f"**{title}:** {value.strip()}")
+        return "\n\n".join(lines)
+
+    lines = []
+    counter = 1
+    for key, value in revision_dict.items():
+        title = key.replace("_", " ").title()
+        lines.append(f"**{counter}. {title}**")
+        lines.append(f"{counter}.1 {value.strip()}\n")
+        counter += 1
+    return "\n".join(lines)
+
